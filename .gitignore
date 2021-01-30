@@ -12,3 +12,4 @@ _deps
 *.code-workspace
 .vscode/
 obj/
+*.bak
