@@ -3,14 +3,23 @@
 .PHONY:clean
 
 #宏定义
-INCPATH=obj/
+OBJPATH=obj/
+IMG=mbr.bin
+SUBDIRS= mbr qemu
 
+all:$(SUBDIRS)
+
+#编译
 mbr:mbr/*.s
-	@nasm -f elf64 -g -F dwarf -l $(INCPATH)$@.lst -O0 -o $(INCPATH)$@.o $^
-	@ld $(INCPATH)$@.o -o $(INCPATH)$@
+	@nasm -i include $()-f bin -g -l $(OBJPATH)$@.lst\
+	 -O0 -o $(OBJPATH)$@.bin $^
 	@echo $@ make success.
-	@$(INCPATH)$@
+
+#虚拟机
+qemu:
+	qemu-system-x86_64 -drive file=$(OBJPATH)$(IMG)\
+	,format=raw -monitor stdio
 
 #清理文件
 clean:
-	@rm -rf $(INCPATH)*.o $(INCPATH)*.lst
+	@rm -rf $(OBJPATH)*.o $(OBJPATH)*.lst $(OBJPATH)*.bin
