@@ -1,10 +1,9 @@
+%include 'boot.asm'
 [BITS 16]
 	org 0x7c00
-	jmp _start
+	jmp _start16
 
-_start:
-	;enable interrupt
-	cli
+_start16:
 	;init regs	
 	mov ax,0
 	mov ss,ax
@@ -42,15 +41,33 @@ _start:
 	mov si,msg2
 	call tmp_print16
 
-	;read memory map ,furture
+	;get memory map
+	call get_mem_map 
+	mov al,0x0a
+	call set_fontcolor
+	mov si,msg4
+	call tmp_print16
 
 	;read hard disk	
-	mov bx,0x500
+	mov bx,loader_base_addr
 	mov di,0
 	mov si,1
-	times 4 call read_disk16
-
-	jmp $
+	call read_disk16
+	mov dx,[loader_base_addr]
+	mov cx,dx
+	shr cx,9
+	and dx,0x1ff
+	cmp dx,0
+	jnz .f
+	dec cx
+.f:
+	cmp cx,0
+	jz .h
+.g:
+	call read_disk16
+	loop .g
+.h:
+	jmp loader_base_addr+2
 
 ;al = background color
 set_background:
@@ -126,7 +143,6 @@ read_disk16:
 	mov dx,0x1f2 ;
 	mov al,1
 	out dx,al
-	mov cx,3
 	inc dx ;
 	mov ax,si
 	out dx,al
@@ -170,9 +186,45 @@ waitdisk:
 	pop dx
 	ret
 
-	msg db "SAPPHIRE 0S",0x0d,0x0a,0x00
-	msg2 db "1 mbr: hello,zev!",0x0d,0x0a,0x00
-	msg3 db 0
-trail:
+get_mem_map:
+	push bx
+	push dx
+	push es
+	push di
+	mov dword [ADRS_count],0
+	xor ebx,ebx
+	mov edx,0x534d4150
+	mov ax,0
+	mov es,ax
+	mov di,ADRS
+.i
+	mov eax,0xe820
+	mov ecx,20
+	int 0x15
+	jc .j
+	add di,20
+	inc dword [ADRS_count]
+	cmp ebx,0
+	jnz .i
+	jmp .k
+.j
+	mov al,0x0c
+	call set_fontcolor
+	mov si,msg3
+	call tmp_print16
+	hlt
+	jmp $
+.k
+	pop di
+	pop es
+	pop dx
+	pop bx
+	ret	
+
+	msg db 'SAPPHIRE 0S',0x0d,0x0a,0x00
+	msg2 db '1 mbr: hello,zev!',0x0d,0x0a,0x00
+	msg3 db 'memory map error',0x0d,0x0a,0x00
+	msg4 db 'mem read ok',0x0d,0x0a,0x00
+	
 	times 510-($-$$) db 0
 	dw 0xaa55

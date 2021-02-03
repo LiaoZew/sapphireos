@@ -5,7 +5,7 @@
 #宏定义
 OBJPATH=obj/
 IMG=sapphireos.img
-SUBDIRS= mbr qemu
+SUBDIRS= mbr loader qemu
 
 all:$(SUBDIRS)
 
@@ -23,7 +23,7 @@ loader:loader/*.s
 	 -O0 -o $(OBJPATH)$@.bin $^
 	@echo $@ make success.
 	@dd if=$(OBJPATH)$@.bin of=$(OBJPATH)$(IMG) \
-	 seek=100 conv=notrunc
+	 seek=1 conv=notrunc
 	@echo $@ write img
 
 #虚拟机

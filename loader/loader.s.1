@@ -1,0 +1,99 @@
+%include "boot.asm"
+[bits 16]
+    org 0x500
+    jmp start
+
+
+start:
+	mov al,0x0a
+	call set_fontcolor
+	mov si,msg
+	call tmp_print16
+	
+	lgdt [gdtdisc]	;load gdt
+	cli	;disable interrupt (or clear)
+	in al,0x92	;trun on a20
+	or al,0x02
+	out 0x92,al
+	mov eax,cr0	;sift to preodect mode
+	or eax,1
+	mov cr0,eax
+	jmp dword selec_code_r0:start32	;clear pipe-line and jump
+
+[bits 32]
+start32:
+	;test bios int can use. vuetify protect mode
+	;mov al,0x0a
+	;call set_fontcolor
+	;mov si,msg2
+	;call tmp_print16
+
+    jmp $
+
+[bits 16]
+gdt:
+desc_null:
+	descriptor 0,0,0	;null	
+desc_code_r0:
+	descriptor 0,0xffffff,da_default | da_x ;code 0-4G
+desc_data_r0:
+	descriptor 0,0xffffff,da_default | da_wr ;data 0-4G
+desc_video_r0:
+	descriptor 0xb8000,0x7,da_default | da_wr ;video 8*4K
+gdtdisc:
+	dw (gdtdisc-gdt-1)
+	dd gdt
+;gdt selector
+selec_code_r0 equ desc_code_r0 - desc_null
+
+set_fontcolor:
+	push bx
+	push cx
+	push dx
+	mov bh,al
+	call get_cursor
+	mov ch,al
+	mov dh,al
+	mov cl,0
+	mov dl,0x4f
+	mov ax,0x600
+	int 0x10
+	pop dx
+	pop cx
+	pop bx
+	ret    
+get_cursor:
+	push bx
+	push cx
+	push dx
+	mov ah,3
+	mov bh,0
+	int 0x10
+	mov al,dh
+	pop dx
+	pop cx
+	pop bx
+	ret
+tmp_print16:
+	push bx
+	mov ah,0x0e
+	mov bh,0x00
+	;mov bl,0x83
+	cld
+.a:
+	lodsb
+	or al,al
+	jz .b
+	int 0x10
+	loop .a
+.b:	
+	pop bx
+	ret
+
+data:
+    times 512 db 0x01
+    times 512 db 0x02
+
+    msg db "2 loader in real",0x0d,0x0a,0x00
+	msg2 db "2 loader in protect",0x0d,0x0a,0x00
+	msg3 db 0
