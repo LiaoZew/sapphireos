@@ -197,7 +197,7 @@ get_mem_map:
 	mov ax,0
 	mov es,ax
 	mov di,ADRS
-.i
+.i:
 	mov eax,0xe820
 	mov ecx,20
 	int 0x15
@@ -207,14 +207,14 @@ get_mem_map:
 	cmp ebx,0
 	jnz .i
 	jmp .k
-.j
+.j:
 	mov al,0x0c
 	call set_fontcolor
 	mov si,msg3
 	call tmp_print16
 	hlt
 	jmp $
-.k
+.k:
 	pop di
 	pop es
 	pop dx

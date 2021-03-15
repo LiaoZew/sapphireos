@@ -26,7 +26,9 @@ ADRS_count equ 0x400	;bios data area
 	db ((%1>>24)&0xff)
 %endmacro
 
+;
 ;gdt attribute
+;
 da_default equ da_limit_4k | da_32 | da_inmem \
 	| da_dpl0 | da_user
 da_default2 equ da_32 | da_inmem \
@@ -51,7 +53,9 @@ da_xc equ 6<<1 ;only exec and confirm
 	;what is confirm(low dpl can use high dpl segment)
 da_xcr equ 7<<1 ;exec and read and confirm
 
+;
 ;selector attribute
+;
 sa_default equ sa_rpl0 | sa_tig
 sa_rpl0 equ 0
 sa_rpl1 equ 1
@@ -59,3 +63,21 @@ sa_rpl2 equ 2
 sa_rpl3 equ 3
 sa_tig equ 0<<2 ;use gdt
 sa_til equ 1<<2 ;use ldt
+
+;
+; page table
+;
+pdt_base_addr equ 0x100000
+page_size equ 4096
+pdt_entry_addr equ pdt_base_addr + page_size
+
+pt_default equ pt_us | pt_rw | pt_p
+pt_p equ 1<<0
+pt_rw equ 1<<1
+pt_us equ 1<<2
+pt_pwt equ 1<<3
+pt_pcd equ 1<<4
+pt_a equ 1<<5
+pt_d equ 1<<6
+pt_pat equ 1<<7
+pt_g equ 1<<8
